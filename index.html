@@ -45,13 +45,38 @@
     style="margin-top:20px; padding:12px 24px; font-size:16px; font-weight:bold; color:white; background:#333; border:none; border-radius:8px; cursor:pointer;">
     🗑️ CLEAR / NEW IMAGE
 </button>
-    <script>
-        async function generateImage() {
-            const prompt = document.getElementById("prompt").value;
-            const result = document.getElementById("result");
+  <script>
+    let imageDB = null;
 
-            result.innerHTML = "Generating...";
+    const dbRequest = indexedDB.open("ImageGeneratorDB", 2);
 
+    dbRequest.onupgradeneeded = function(event) {
+        const db = event.target.result;
+
+        if (!db.objectStoreNames.contains("images")) {
+            db.createObjectStore("images", { autoIncrement: true });
+        }
+    };
+
+    dbRequest.onsuccess = function() {
+        imageDB = dbRequest.result;
+        console.log("Image database ready.");
+
+        loadGallery();
+    };
+
+    dbRequest.onerror = function() {
+        console.error("Database error:", dbRequest.error);
+    };
+
+
+    async function generateImage() {
+        const prompt = document.getElementById("prompt").value;
+        const result = document.getElementById("result");
+
+        result.innerHTML = "Generating...";
+
+        try {
             const response = await fetch("/api/generate", {
                 method: "POST",
                 headers: {
@@ -66,77 +91,74 @@
             }
 
             const blob = await response.blob();
-            const transaction = window.imageDB.transaction("images", "readwrite");
-const store = transaction.objectStore("images");
-store.add(blob);
-console.log("Image saved to database.");
-            const transaction = window.imageDB.transaction("images", "readwrite");
-const store = transaction.objectStore("images");
-store.add(blob);
-console.log("Image saved to database.");
+
             const imageUrl = URL.createObjectURL(blob);
-const dbRequest = indexedDB.open("ImageGeneratorDB", 2);
 
-dbRequest.onupgradeneeded = function(event) {
-    const db = event.target.result;
-    db.createObjectStore("images", { autoIncrement: true });
-};
+            if (imageDB) {
+                const transaction = imageDB.transaction("images", "readwrite");
+                const store = transaction.objectStore("images");
+                store.add(blob);
 
+                console.log("Image saved to database.");
+            }
 
+            addGalleryImage(blob);
 
-dbRequest.onsuccess = function() {
-    const db = dbRequest.result;
-    console.log("Image database ready.");
+            result.innerHTML = `
+                <img src="${imageUrl}" style="display:block; max-width:500px; width:100%; height:auto; margin:20px auto;">
+                <br>
+                <a href="${imageUrl}" download="generated-image.png"
+                   style="display:inline-block; padding:12px 24px; background:#333; color:white; text-decoration:none; border-radius:8px; font-weight:bold;">
+                    ⬇️ DOWNLOAD IMAGE
+                </a>
+            `;
 
-        document.getElementById("gallery").appendChild(galleryImage);
-    });
-};
-    const transaction = db.transaction("images", "readwrite");
-    const store = transaction.objectStore("images");
-    store.add(blob);
-};
-
-const gallery = document.getElementById("gallery");
-const galleryImage = document.createElement("img");
-
-galleryImage.src = imageUrl;
-galleryImage.style.width = "200px";
-galleryImage.style.cursor = "pointer";
-
-galleryImage.onclick = function() {
-    window.open(imageUrl, "_blank");
-};
-
-galleryImage.style.borderRadius = "10px";
-gallery.appendChild(galleryImage);
-
-const gallery = document.getElementById("gallery");
-const galleryImage = document.createElement("img");
-
-galleryImage.src = imageUrl;
-galleryImage.style.width = "200px";
-galleryImage.style.cursor = "pointer";
-
-galleryImage.onclick = function() {
-    window.open(imageUrl, "_blank");
-};
-
-galleryImage.style.borderRadius = "10px";
-gallery.appendChild(galleryImage);
-          result.innerHTML = `
-    <img src="${imageUrl}" style="display:block; max-width:500px; width:100%; height:auto; margin:20px auto;">
-    <br>
-    <a href="${imageUrl}" download="generated-image.png"
-       style="display:inline-block; padding:12px 24px; background:#333; color:white; text-decoration:none; border-radius:8px; font-weight:bold;">
-        ⬇️ DOWNLOAD IMAGE
-    </a>
-`;
+        } catch (error) {
+            console.error(error);
+            result.innerHTML = "Something went wrong.";
+        }
     }
 
+
+    function addGalleryImage(blob) {
+        const imageUrl = URL.createObjectURL(blob);
+
+        const galleryImage = document.createElement("img");
+
+        galleryImage.src = imageUrl;
+        galleryImage.style.width = "200px";
+        galleryImage.style.cursor = "pointer";
+        galleryImage.style.borderRadius = "10px";
+
+        galleryImage.onclick = function() {
+            window.open(imageUrl, "_blank");
+        };
+
+        document.getElementById("gallery").appendChild(galleryImage);
+    }
+
+
+    function loadGallery() {
+        if (!imageDB) {
+            return;
+        }
+
+        const transaction = imageDB.transaction("images", "readonly");
+        const store = transaction.objectStore("images");
+        const request = store.getAll();
+
+        request.onsuccess = function() {
+            request.result.forEach(function(blob) {
+                addGalleryImage(blob);
+            });
+        };
+    }
+
+
     function clearImage() {
-    document.getElementById("prompt").value = "";
-    document.getElementById("result").innerHTML = "";
-}
-    </script>
+        document.getElementById("prompt").value = "";
+        document.getElementById("result").innerHTML = "";
+    }
+</script> 
 </body>
 </html>
