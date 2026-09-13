@@ -7,13 +7,14 @@ export default async function handler(req, res) {
 
     try {
 const { prompt, aspectRatio } = req.body;
+        const selectedSize = aspectRatio || "1024x1024";
         if (!prompt) {
             return res.status(400).json({ error: "Please enter a prompt." });
         }
 
         const client = new InferenceClient(process.env.HF_TOKEN);
 
-       const [width, height] = aspectRatio.split("x").map(Number);
+       const [width, height] = selectedsize.split("x").map(Number);
 
 const image = await client.textToImage({
     model: "black-forest-labs/FLUX.1-schnell",
