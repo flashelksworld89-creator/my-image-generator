@@ -12,7 +12,9 @@ const { prompt, aspectRatio } = req.body;
             return res.status(400).json({ error: "Please enter a prompt." });
         }
 
-        const client = new InferenceClient(process.env.HF_TOKEN);
+        const client = new InferenceClient(process.env.HF_TOKEN, {
+    provider: "fal-ai"
+});
 
        const [width, height] = selectedSize.split("x").map(Number);
 
