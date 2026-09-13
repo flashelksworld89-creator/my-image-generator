@@ -94,15 +94,21 @@
 
             const imageUrl = URL.createObjectURL(blob);
 
-            if (imageDB) {
-                const transaction = imageDB.transaction("images", "readwrite");
-                const store = transaction.objectStore("images");
-               const request = store.add(blob);
+           if (imageDB) {
+    const transaction = imageDB.transaction("images", "readwrite");
+    const store = transaction.objectStore("images");
+    const request = store.add(blob);
 
-                console.log("Image saved to database.");
-            }
+    request.onsuccess = function() {
+        addGalleryImage(blob, request.result);
+    };
 
-            addGalleryImage(blob);
+    console.log("Image saved to database.");
+}
+
+           request.onsuccess = function() {
+    addGalleryImage(blob, request.result);
+};
 
             result.innerHTML = `
                 <img src="${imageUrl}" style="display:block; max-width:500px; width:100%; height:auto; margin:20px auto;">
@@ -120,7 +126,7 @@
     }
 
 
-    function addGalleryImage(blob) {
+    function addGalleryImage(blob, key) {
         const imageUrl = URL.createObjectURL(blob);
 
         const galleryImage = document.createElement("img");
