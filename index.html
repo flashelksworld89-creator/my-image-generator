@@ -67,7 +67,19 @@
 
             const blob = await response.blob();
             const imageUrl = URL.createObjectURL(blob);
+  const dbRequest = indexedDB.open("ImageGeneratorDB", 1);
+dbRequest.onsuccess = function() {
+  const db = dbRequest.result;
+console.log("Image database ready.");
+dbRequest.onupgradeneeded = function(event) {
+    const db = event.target.result;
+    db.createObjectStore("images", { autoIncrement: true });
+};          
 const gallery = document.getElementById("gallery");
+const transaction = db.transaction("images", "readwrite");
+const store = transaction.objectStore("images");
+
+store.add(blob);
 const galleryImage = document.createElement("img");
 
 galleryImage.src = imageUrl;
