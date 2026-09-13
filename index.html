@@ -37,6 +37,10 @@
 
    <div id="result" style="margin-top:30px;"></div>
 
+<h2 style="margin-top:50px; color:#fff;">🖼️ Image History</h2>
+
+<div id="gallery" style="display:flex; flex-wrap:wrap; gap:20px; justify-content:center; margin-top:20px;"></div>
+
 <button type="button" onclick="clearImage()"
     style="margin-top:20px; padding:12px 24px; font-size:16px; font-weight:bold; color:white; background:#333; border:none; border-radius:8px; cursor:pointer;">
     🗑️ CLEAR / NEW IMAGE
@@ -63,7 +67,14 @@
 
             const blob = await response.blob();
             const imageUrl = URL.createObjectURL(blob);
+const gallery = document.getElementById("gallery");
+const galleryImage = document.createElement("img");
 
+galleryImage.src = imageUrl;
+galleryImage.style.width = "200px";
+galleryImage.style.borderRadius = "10px";
+
+gallery.appendChild(galleryImage);
           result.innerHTML = `
     <img src="${imageUrl}" style="display:block; max-width:500px; width:100%; height:auto; margin:20px auto;">
     <br>
