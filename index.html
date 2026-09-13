@@ -66,30 +66,60 @@
             }
 
             const blob = await response.blob();
+            const transaction = window.imageDB.transaction("images", "readwrite");
+const store = transaction.objectStore("images");
+store.add(blob);
+console.log("Image saved to database.");
             const imageUrl = URL.createObjectURL(blob);
-  const dbRequest = indexedDB.open("ImageGeneratorDB", 1);
-dbRequest.onsuccess = function() {
-  const db = dbRequest.result;
-console.log("Image database ready.");
+const dbRequest = indexedDB.open("ImageGeneratorDB", 2);
+
 dbRequest.onupgradeneeded = function(event) {
     const db = event.target.result;
     db.createObjectStore("images", { autoIncrement: true });
-};          
-const gallery = document.getElementById("gallery");
-const transaction = db.transaction("images", "readwrite");
-const store = transaction.objectStore("images");
+};
 
-store.add(blob);
+const dbRequest = indexedDB.open("ImageGeneratorDB", 1);
+
+dbRequest.onupgradeneeded = function(event) {
+    const db = event.target.result;
+    db.createObjectStore("images", { autoIncrement: true });
+};
+
+dbRequest.onsuccess = function() {
+    const db = dbRequest.result;
+    console.log("Image database ready.");
+
+    const transaction = db.transaction("images", "readwrite");
+    const store = transaction.objectStore("images");
+    store.add(blob);
+};
+
+const gallery = document.getElementById("gallery");
 const galleryImage = document.createElement("img");
 
 galleryImage.src = imageUrl;
 galleryImage.style.width = "200px";
 galleryImage.style.cursor = "pointer";
+
 galleryImage.onclick = function() {
     window.open(imageUrl, "_blank");
-};            
-galleryImage.style.borderRadius = "10px";
+};
 
+galleryImage.style.borderRadius = "10px";
+gallery.appendChild(galleryImage);
+
+const gallery = document.getElementById("gallery");
+const galleryImage = document.createElement("img");
+
+galleryImage.src = imageUrl;
+galleryImage.style.width = "200px";
+galleryImage.style.cursor = "pointer";
+
+galleryImage.onclick = function() {
+    window.open(imageUrl, "_blank");
+};
+
+galleryImage.style.borderRadius = "10px";
 gallery.appendChild(galleryImage);
           result.innerHTML = `
     <img src="${imageUrl}" style="display:block; max-width:500px; width:100%; height:auto; margin:20px auto;">
