@@ -14,7 +14,7 @@ const { prompt, aspectRatio } = req.body;
 
         const client = new InferenceClient(process.env.HF_TOKEN);
 
-       const [width, height] = selectedsize.split("x").map(Number);
+       const [width, height] = selectedSize.split("x").map(Number);
 
 const image = await client.textToImage({
     model: "black-forest-labs/FLUX.1-schnell",
