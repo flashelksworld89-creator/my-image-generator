@@ -70,6 +70,10 @@
 const store = transaction.objectStore("images");
 store.add(blob);
 console.log("Image saved to database.");
+            const transaction = window.imageDB.transaction("images", "readwrite");
+const store = transaction.objectStore("images");
+store.add(blob);
+console.log("Image saved to database.");
             const imageUrl = URL.createObjectURL(blob);
 const dbRequest = indexedDB.open("ImageGeneratorDB", 2);
 
@@ -78,32 +82,11 @@ dbRequest.onupgradeneeded = function(event) {
     db.createObjectStore("images", { autoIncrement: true });
 };
 
-const dbRequest = indexedDB.open("ImageGeneratorDB", 1);
 
-dbRequest.onupgradeneeded = function(event) {
-    const db = event.target.result;
-    db.createObjectStore("images", { autoIncrement: true });
-};
 
 dbRequest.onsuccess = function() {
     const db = dbRequest.result;
     console.log("Image database ready.");
-const transaction = window.imageDB.transaction("images", "readonly");
-const store = transaction.objectStore("images");
-const request = store.getAll();
-    request.onsuccess = function() {
-    request.result.forEach(function(blob) {
-        const imageUrl = URL.createObjectURL(blob);
-
-        const galleryImage = document.createElement("img");
-        galleryImage.src = imageUrl;
-        galleryImage.style.width = "200px";
-        galleryImage.style.cursor = "pointer";
-        galleryImage.style.borderRadius = "10px";
-
-        galleryImage.onclick = function() {
-            window.open(imageUrl, "_blank");
-        };
 
         document.getElementById("gallery").appendChild(galleryImage);
     });
