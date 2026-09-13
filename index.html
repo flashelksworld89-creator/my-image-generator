@@ -22,7 +22,20 @@
   <p style="font-size:18px; color:#bbb; margin-bottom:25px;">
     Describe the image you want to create
 </p>
+<div style="margin-bottom:20px;">
+    <label for="aspectRatio" style="font-size:18px; color:#bbb;">
+        Image Size:
+    </label>
 
+    <select id="aspectRatio"
+        style="margin-left:10px; padding:10px; font-size:16px; border-radius:8px; background:#1c1c1c; color:white; border:1px solid #444;">
+        <option value="1024x1024">Square (1:1)</option>
+        <option value="1152x768">Landscape (3:2)</option>
+        <option value="768x1152">Portrait (2:3)</option>
+        <option value="1344x768">Wide (16:9)</option>
+        <option value="768x1344">Tall (9:16)</option>
+    </select>
+</div>
    <textarea id="prompt" rows="6" cols="50"
     placeholder="Describe the image you want to create..."
     style="display:block; width:100%; max-width:600px; height:160px; margin:0 auto 25px; padding:15px; box-sizing:border-box; border-radius:12px; border:1px solid #444; background:#1c1c1c; color:white; font-size:16px; line-height:1.5; resize:vertical;"></textarea>
@@ -77,6 +90,7 @@
 
     async function generateImage() {
         const prompt = document.getElementById("prompt").value;
+        const aspectRatio = document.getElementById("aspectRatio").value;
         const result = document.getElementById("result");
 
         result.innerHTML = "Generating...";
@@ -87,7 +101,7 @@
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ prompt: prompt })
+              body: JSON.stringify({ prompt: prompt, aspectRatio: aspectRatio })
             });
 
             if (!response.ok) {
@@ -210,9 +224,7 @@ function deleteAllHistory() {
     const store = transaction.objectStore("images");
     const request = store.clear();
 
-    request.onsuccess = function() {
-        document.getElementById("gallery").innerHTML = "";
-    };
+    
 }
 </script> 
 </body>
