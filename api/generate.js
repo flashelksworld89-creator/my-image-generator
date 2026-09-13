@@ -1,3 +1,5 @@
+import { InferenceClient } from "@huggingface/inference";
+
 export default async function handler(req, res) {
     if (req.method !== "POST") {
         return res.status(405).json({ error: "Method not allowed" });
@@ -10,29 +12,22 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: "Please enter a prompt." });
         }
 
-        const response = await fetch(
-            "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
-            {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${process.env.HF_TOKEN}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ inputs: prompt })
-            }
-        );
+        const client = new InferenceClient(process.env.HF_TOKEN);
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            return res.status(response.status).send(errorText);
-        }
+        const image = await client.textToImage({
+            model: "black-forest-labs/FLUX.1-schnell",
+            inputs: prompt
+        });
 
-        const imageBuffer = Buffer.from(await response.arrayBuffer());
+        const buffer = Buffer.from(await image.arrayBuffer());
 
         res.setHeader("Content-Type", "image/png");
-        return res.status(200).send(imageBuffer);
+        return res.status(200).send(buffer);
 
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        console.error(error);
+        return res.status(500).json({
+            error: error.message || "Image generation failed."
+        });
     }
 }
