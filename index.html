@@ -88,7 +88,26 @@ dbRequest.onupgradeneeded = function(event) {
 dbRequest.onsuccess = function() {
     const db = dbRequest.result;
     console.log("Image database ready.");
+const transaction = window.imageDB.transaction("images", "readonly");
+const store = transaction.objectStore("images");
+const request = store.getAll();
+    request.onsuccess = function() {
+    request.result.forEach(function(blob) {
+        const imageUrl = URL.createObjectURL(blob);
 
+        const galleryImage = document.createElement("img");
+        galleryImage.src = imageUrl;
+        galleryImage.style.width = "200px";
+        galleryImage.style.cursor = "pointer";
+        galleryImage.style.borderRadius = "10px";
+
+        galleryImage.onclick = function() {
+            window.open(imageUrl, "_blank");
+        };
+
+        document.getElementById("gallery").appendChild(galleryImage);
+    });
+};
     const transaction = db.transaction("images", "readwrite");
     const store = transaction.objectStore("images");
     store.add(blob);
