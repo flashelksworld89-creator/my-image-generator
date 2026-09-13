@@ -45,6 +45,11 @@
     style="margin-top:20px; padding:12px 24px; font-size:16px; font-weight:bold; color:white; background:#333; border:none; border-radius:8px; cursor:pointer;">
     🗑️ CLEAR / NEW IMAGE
 </button>
+
+<button type="button" onclick="deleteAllHistory()"
+    style="margin-top:20px; padding:12px 24px; font-size:16px; font-weight:bold; color:white; background:#8b0000; border:none; border-radius:8px; cursor:pointer;">
+    🗑️ DELETE ALL HISTORY
+</button>
   <script>
     let imageDB = null;
 
@@ -191,10 +196,24 @@ document.getElementById("gallery").appendChild(deleteButton);
     }
 
 
-    function clearImage() {
-        document.getElementById("prompt").value = "";
-        document.getElementById("result").innerHTML = "";
+   function clearImage() {
+    document.getElementById("prompt").value = "";
+    document.getElementById("result").innerHTML = "";
+}
+
+function deleteAllHistory() {
+    if (!imageDB) {
+        return;
     }
+
+    const transaction = imageDB.transaction("images", "readwrite");
+    const store = transaction.objectStore("images");
+    const request = store.clear();
+
+    request.onsuccess = function() {
+        document.getElementById("gallery").innerHTML = "";
+    };
+}
 </script> 
 </body>
 </html>
