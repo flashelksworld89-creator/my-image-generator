@@ -97,7 +97,7 @@
             if (imageDB) {
                 const transaction = imageDB.transaction("images", "readwrite");
                 const store = transaction.objectStore("images");
-                store.add(blob);
+               const request = store.add(blob);
 
                 console.log("Image saved to database.");
             }
@@ -134,7 +134,32 @@
             window.open(imageUrl, "_blank");
         };
 
-        document.getElementById("gallery").appendChild(galleryImage);
+       const deleteButton = document.createElement("button");
+deleteButton.textContent = "🗑️ DELETE";
+deleteButton.style.display = "block";
+deleteButton.style.margin = "8px auto 20px";
+deleteButton.style.padding = "8px 16px";
+deleteButton.style.background = "#8b0000";
+deleteButton.style.color = "white";
+deleteButton.style.border = "none";
+deleteButton.style.borderRadius = "6px";
+deleteButton.style.cursor = "pointer";
+
+deleteButton.onclick = function() {
+    const transaction = imageDB.transaction("images", "readwrite");
+    const store = transaction.objectStore("images");
+
+    const request = store.delete(key);
+
+    request.onsuccess = function() {
+        galleryImage.remove();
+        deleteButton.remove();
+        URL.revokeObjectURL(imageUrl);
+    };
+};
+
+document.getElementById("gallery").appendChild(galleryImage);
+document.getElementById("gallery").appendChild(deleteButton);
     }
 
 
@@ -145,11 +170,16 @@
 
         const transaction = imageDB.transaction("images", "readonly");
         const store = transaction.objectStore("images");
-        const request = store.getAll();
+        const request = store.openCursor();
 
-        request.onsuccess = function() {
-            request.result.forEach(function(blob) {
-                addGalleryImage(blob);
+     request.onsuccess = function(event) {
+    const cursor = event.target.result;
+
+    if (cursor) {
+        addGalleryImage(cursor.value, cursor.key);
+        cursor.continue();
+    }
+};
             });
         };
     }
