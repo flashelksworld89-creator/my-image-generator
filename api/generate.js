@@ -6,18 +6,21 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { prompt } = req.body;
-
+const { prompt, aspectRatio } = req.body;
         if (!prompt) {
             return res.status(400).json({ error: "Please enter a prompt." });
         }
 
         const client = new InferenceClient(process.env.HF_TOKEN);
 
-        const image = await client.textToImage({
-            model: "black-forest-labs/FLUX.1-schnell",
-            inputs: prompt
-        });
+       const [width, height] = aspectRatio.split("x").map(Number);
+
+const image = await client.textToImage({
+    model: "black-forest-labs/FLUX.1-schnell",
+    prompt: prompt,
+    width: width,
+    height: height
+});
 
         const buffer = Buffer.from(await image.arrayBuffer());
 
