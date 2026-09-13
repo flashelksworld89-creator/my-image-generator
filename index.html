@@ -60,7 +60,14 @@
             const blob = await response.blob();
             const imageUrl = URL.createObjectURL(blob);
 
-           result.innerHTML = `<img src="${imageUrl}" style="display:block; max-width:500px; width:100%; height:auto; margin:20px auto;">`;
+          result.innerHTML = `
+    <img src="${imageUrl}" style="display:block; max-width:500px; width:100%; height:auto; margin:20px auto;">
+    <br>
+    <a href="${imageUrl}" download="generated-image.png"
+       style="display:inline-block; padding:12px 24px; background:#333; color:white; text-decoration:none; border-radius:8px; font-weight:bold;">
+        ⬇️ DOWNLOAD IMAGE
+    </a>
+`;
         }
     </script>
 </body>
