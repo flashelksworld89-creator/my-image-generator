@@ -72,6 +72,10 @@ const galleryImage = document.createElement("img");
 
 galleryImage.src = imageUrl;
 galleryImage.style.width = "200px";
+galleryImage.style.cursor = "pointer";
+galleryImage.onclick = function() {
+    window.open(imageUrl, "_blank");
+};            
 galleryImage.style.borderRadius = "10px";
 
 gallery.appendChild(galleryImage);
