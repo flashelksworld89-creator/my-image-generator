@@ -7,7 +7,7 @@ export default async function handler(req, res) {
 
     try {
 const { prompt, aspectRatio } = req.body;
-        const selectedSize = aspectRatio || "1024x1024";
+        const selectedSize = aspectRatio || "1024x1024"; 
         if (!prompt) {
             return res.status(400).json({ error: "Please enter a prompt." });
         }
