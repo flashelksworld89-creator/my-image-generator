@@ -3,23 +3,47 @@
 <head>
     <title>My Image Generator</title>
 </head>
-
 <body>
-
     <h1>My AI Image Generator</h1>
 
     <p>Describe the image you want to create:</p>
 
-    <textarea 
-        id="prompt" 
-        rows="6" 
-        cols="50"
-        placeholder="Describe your image here..."
-    ></textarea>
+    <textarea id="prompt" rows="6" cols="50"
+        placeholder="Describe the image here..."></textarea>
 
     <br><br>
 
-    <button>GENERATE IMAGE</button>
+    <button onclick="generateImage()">GENERATE IMAGE</button>
 
+    <br><br>
+
+    <div id="result"></div>
+
+    <script>
+        async function generateImage() {
+            const prompt = document.getElementById("prompt").value;
+            const result = document.getElementById("result");
+
+            result.innerHTML = "Generating...";
+
+            const response = await fetch("/api/generate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ prompt: prompt })
+            });
+
+            if (!response.ok) {
+                result.innerHTML = "Something went wrong.";
+                return;
+            }
+
+            const blob = await response.blob();
+            const imageUrl = URL.createObjectURL(blob);
+
+            result.innerHTML = `<img src="${imageUrl}" style="max-width:90%;">`;
+        }
+    </script>
 </body>
 </html>
