@@ -42,7 +42,7 @@
             const blob = await response.blob();
             const imageUrl = URL.createObjectURL(blob);
 
-            result.innerHTML = `<img src="${imageUrl}" style="max-width:90%;">`;
+           result.innerHTML = `<img src="${imageUrl}" style="display:block; max-width:500px; width:100%; height:auto; margin:20px auto;">`;
         }
     </script>
 </body>
