@@ -1,6 +1,7 @@
 {
   "type": "module",
   "dependencies": {
-    "@huggingface/inference": "^4.0.0"
+    "@huggingface/inference": "^4.0.0",
+    "@fal-ai/client": "^1.6.2"
   }
 }
