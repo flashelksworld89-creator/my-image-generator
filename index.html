@@ -81,13 +81,11 @@
 
     <textarea
         id="prompt"
-        rows="6"
-        cols="50"
         placeholder="Describe the image you want to create..."></textarea>
 
     <button
         onclick="generateImage()"
-        style="padding:14px 30px; font-size:18px; font-weight:bold; color:white; background:#6c5ce7; border:none; border-radius:10px; box-shadow:0 4px 15px rgba(0,0,0,0.3);">
+        style="padding:14px 30px; font-size:18px; font-weight:bold; color:white; background:#6c5ce7; border:none; border-radius:10px;">
         ✨ GENERATE IMAGE
     </button>
 
@@ -115,20 +113,22 @@
         </button>
 
         <div id="storyResult" style="margin-top:30px;"></div>
-<button
-    type="button"
-    onclick="generateSceneImages()"
-    style="margin-top:20px; padding:14px 30px; font-size:18px; font-weight:bold; color:white; background:#6c5ce7; border:none; border-radius:10px;">
-    🎨 GENERATE SCENE IMAGES
-</button>
 
-<div id="sceneImages" style="margin-top:30px;"></div>
+        <button
+            type="button"
+            onclick="generateSceneImages()"
+            style="margin-top:20px; padding:14px 30px; font-size:18px; font-weight:bold; color:white; background:#6c5ce7; border:none; border-radius:10px;">
+            🎨 GENERATE SCENE IMAGES
+        </button>
+
+        <div id="sceneImages" style="margin-top:30px;"></div>
+
     </div>
 
 
     <!-- IMAGE HISTORY -->
 
-    <h2 style="margin-top:50px; color:#fff;">
+    <h2 style="margin-top:50px;">
         🖼️ Image History
     </h2>
 
@@ -154,70 +154,84 @@
 
 <script>
 
-    let imageDB = null;
+let imageDB = null;
 
-    const dbRequest = indexedDB.open("ImageGeneratorDB", 2);
+const dbRequest =
+    indexedDB.open("ImageGeneratorDB", 2);
 
-    dbRequest.onupgradeneeded = function(event) {
 
-        const db = event.target.result;
+dbRequest.onupgradeneeded = function(event) {
 
-        if (!db.objectStoreNames.contains("images")) {
-            db.createObjectStore("images", {
-                autoIncrement: true
-            });
-        }
-    };
+    const db = event.target.result;
 
-    dbRequest.onsuccess = function() {
+    if (!db.objectStoreNames.contains("images")) {
 
-        imageDB = dbRequest.result;
-
-        console.log("Image database ready.");
-
-        loadGallery();
-    };
-
-    dbRequest.onerror = function() {
-
-        console.error(
-            "Database error:",
-            dbRequest.error
+        db.createObjectStore(
+            "images",
+            { autoIncrement: true }
         );
-    };
+    }
+};
 
 
-    async function generateImage() {
+dbRequest.onsuccess = function() {
 
-        const prompt =
-            document.getElementById("prompt").value;
+    imageDB = dbRequest.result;
 
-        const aspectRatio =
-            document.getElementById("aspectRatio").value;
+    console.log("Image database ready.");
 
-        const result =
-            document.getElementById("result");
+    loadGallery();
+};
 
-        if (!prompt.trim()) {
 
-            result.innerHTML =
-                "Please enter a prompt.";
+dbRequest.onerror = function() {
 
-            return;
-        }
+    console.error(
+        "Database error:",
+        dbRequest.error
+    );
+};
+
+
+
+/* SINGLE IMAGE GENERATOR */
+
+async function generateImage() {
+
+    const prompt =
+        document.getElementById("prompt").value;
+
+    const aspectRatio =
+        document.getElementById("aspectRatio").value;
+
+    const result =
+        document.getElementById("result");
+
+
+    if (!prompt.trim()) {
 
         result.innerHTML =
-            "Generating...";
+            "Please enter a prompt.";
 
-        try {
+        return;
+    }
 
-            const response = await fetch(
+
+    result.innerHTML =
+        "Generating...";
+
+
+    try {
+
+        const response =
+            await fetch(
                 "/api/generate",
                 {
                     method: "POST",
 
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type":
+                            "application/json"
                     },
 
                     body: JSON.stringify({
@@ -227,141 +241,163 @@
                 }
             );
 
-            if (!response.ok) {
 
-                result.innerHTML =
-                    "Something went wrong.";
-
-                return;
-            }
-
-            const blob =
-                await response.blob();
-
-            const imageUrl =
-                URL.createObjectURL(blob);
-
-
-            if (imageDB) {
-
-                const transaction =
-                    imageDB.transaction(
-                        "images",
-                        "readwrite"
-                    );
-
-                const store =
-                    transaction.objectStore(
-                        "images"
-                    );
-
-                const request =
-                    store.add(blob);
-
-                request.onsuccess =
-                    function() {
-
-                        addGalleryImage(
-                            blob,
-                            request.result
-                        );
-                    };
-            }
-
-
-            result.innerHTML = `
-                <img
-                    src="${imageUrl}"
-                    style="display:block; max-width:500px; width:100%; height:auto; margin:20px auto;"
-                >
-
-                <br>
-
-                <a
-                    href="${imageUrl}"
-                    download="generated-image.png"
-                    style="display:inline-block; padding:12px 24px; background:#333; color:white; text-decoration:none; border-radius:8px; font-weight:bold;"
-                >
-                    ⬇️ DOWNLOAD IMAGE
-                </a>
-            `;
-
-        } catch (error) {
-
-            console.error(error);
+        if (!response.ok) {
 
             result.innerHTML =
                 "Something went wrong.";
-        }
-    }
-
-
-    async function planStory() {
-
-        const paragraph =
-            document.getElementById("storyPrompt").value;
-
-        const storyResult =
-            document.getElementById("storyResult");
-
-        if (!paragraph.trim()) {
-
-            storyResult.innerHTML =
-                "Please enter a paragraph.";
 
             return;
         }
 
-        storyResult.innerHTML =
-            "🧠 Planning your story...";
+
+        const blob =
+            await response.blob();
+
+        const imageUrl =
+            URL.createObjectURL(blob);
 
 
-        try {
+        if (imageDB) {
 
-            const response =
-                await fetch(
-                    "/api/planscenes",
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        body: JSON.stringify({
-                            paragraph:
-                                paragraph
-                        })
-                    }
+            const transaction =
+                imageDB.transaction(
+                    "images",
+                    "readwrite"
                 );
 
+            const store =
+                transaction.objectStore(
+                    "images"
+                );
 
-            const data =
-                await response.json();
-
-
-            if (!response.ok) {
-
-                storyResult.innerHTML =
-                    "Story planning failed: " +
-                    (data.error ||
-                        "Unknown error.");
-
-                return;
-            }
+            const request =
+                store.add(blob);
 
 
-            let html = `
-                <h2>${escapeHtml(data.title || "Your Story")}</h2>
+            request.onsuccess =
+                function() {
 
-                <p style="color:#aaa;">
-                    ${escapeHtml(data.style || "")}
-                </p>
-            `;
+                    addGalleryImage(
+                        blob,
+                        request.result
+                    );
+                };
+        }
 
 
-            data.scenes.forEach(function(scene) {
+        result.innerHTML = `
+            <img
+                src="${imageUrl}"
+                style="display:block; max-width:500px; width:100%; height:auto; margin:20px auto;"
+            >
+
+            <br>
+
+            <a
+                href="${imageUrl}"
+                download="generated-image.png"
+                style="display:inline-block; padding:12px 24px; background:#333; color:white; text-decoration:none; border-radius:8px; font-weight:bold;"
+            >
+                ⬇️ DOWNLOAD IMAGE
+            </a>
+        `;
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        result.innerHTML =
+            "Something went wrong.";
+    }
+}
+
+
+
+/* STORY PLANNER */
+
+async function planStory() {
+
+    const paragraph =
+        document.getElementById(
+            "storyPrompt"
+        ).value;
+
+    const storyResult =
+        document.getElementById(
+            "storyResult"
+        );
+
+
+    if (!paragraph.trim()) {
+
+        storyResult.innerHTML =
+            "Please enter a paragraph.";
+
+        return;
+    }
+
+
+    storyResult.innerHTML =
+        "🧠 Planning your story...";
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/planscenes",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        paragraph: paragraph
+                    })
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            storyResult.innerHTML =
+                "Story planning failed: " +
+                (
+                    data.error ||
+                    "Unknown error."
+                );
+
+            return;
+        }
+
+
+        let html = `
+            <h2>
+                ${escapeHtml(
+                    data.title ||
+                    "Your Story"
+                )}
+            </h2>
+
+            <p style="color:#aaa;">
+                ${escapeHtml(
+                    data.style || ""
+                )}
+            </p>
+        `;
+
+
+        data.scenes.forEach(
+            function(scene) {
 
                 html += `
                     <div class="scene">
@@ -371,13 +407,23 @@
                         </h3>
 
                         <p>
-                            <strong>Description:</strong><br>
-                            ${escapeHtml(scene.description)}
+                            <strong>
+                                Description:
+                            </strong>
+                            <br>
+                            ${escapeHtml(
+                                scene.description
+                            )}
                         </p>
 
                         <p>
-                            <strong>Visual Prompt:</strong><br>
-                            ${escapeHtml(scene.visual_prompt)}
+                            <strong>
+                                Visual Prompt:
+                            </strong>
+                            <br>
+                            ${escapeHtml(
+                                scene.visual_prompt
+                            )}
                         </p>
 
                         <p style="color:#aaa;">
@@ -388,68 +434,109 @@
 
                     </div>
                 `;
-            });
+            }
+        );
 
 
-            storyResult.innerHTML = html;
+        storyResult.innerHTML =
+            html;
 
 
-        } catch (error) {
+    } catch (error) {
 
-            console.error(error);
+        console.error(error);
 
-            storyResult.innerHTML =
-                "Story planning failed.";
-        }
+        storyResult.innerHTML =
+            "Story planning failed.";
     }
+}
+
+
+
+/* GENERATE IMAGES FOR STORY SCENES */
 
 async function generateSceneImages() {
 
     const sceneImages =
-        document.getElementById("sceneImages");
+        document.getElementById(
+            "sceneImages"
+        );
 
     const sceneElements =
-        document.querySelectorAll(".scene");
+        document.querySelectorAll(
+            ".scene"
+        );
+
 
     if (!sceneElements.length) {
+
         sceneImages.innerHTML =
             "Please plan a story first.";
+
         return;
     }
+
 
     sceneImages.innerHTML =
         "<h2>🎨 Generating Scene Images...</h2>";
 
-    for (let i = 0; i < sceneElements.length; i++) {
+
+    for (
+        let i = 0;
+        i < sceneElements.length;
+        i++
+    ) {
 
         const scene =
             sceneElements[i];
 
+
         const promptElement =
-            scene.querySelector("p:nth-of-type(2)");
+            scene.querySelector(
+                "p:nth-of-type(2)"
+            );
+
 
         const prompt =
             promptElement
                 ? promptElement.innerText
-                    .replace("Visual Prompt:", "")
+                    .replace(
+                        "Visual Prompt:",
+                        ""
+                    )
                     .trim()
                 : "";
+
 
         if (!prompt) {
             continue;
         }
 
+
         const imageBox =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
         imageBox.style.margin =
             "30px auto";
 
-        imageBox.innerHTML =
-            `<h3>🎬 Scene ${i + 1}</h3>
-             <p>Generating image...</p>`;
 
-        sceneImages.appendChild(imageBox);
+        imageBox.innerHTML = `
+            <h3>
+                🎬 Scene ${i + 1}
+            </h3>
+
+            <p>
+                Generating image...
+            </p>
+        `;
+
+
+        sceneImages.appendChild(
+            imageBox
+        );
+
 
         try {
 
@@ -464,240 +551,364 @@ async function generateSceneImages() {
                                 "application/json"
                         },
 
-                        body: JSON.stringify({
-                            prompt: prompt
-                        })
+                        body:
+                            JSON.stringify({
+                                prompt: prompt
+                            })
                     }
                 );
 
+
             if (!response.ok) {
+
                 throw new Error(
                     "Image generation failed."
                 );
             }
 
+
             const blob =
                 await response.blob();
 
-            const imageUrl =
-                URL.createObjectURL(blob);
 
-            imageBox.innerHTML =
-                `<h3>🎬 Scene ${i + 1}</h3>
-                 <img
+            const imageUrl =
+                URL.createObjectURL(
+                    blob
+                );
+
+
+            /* NEW VIDEO PREPARATION */
+
+            const base64Image =
+                await blobToBase64(
+                    blob
+                );
+
+
+            imageBox.dataset.image =
+                base64Image;
+
+            imageBox.dataset.prompt =
+                prompt;
+
+
+            imageBox.innerHTML = `
+                <h3>
+                    🎬 Scene ${i + 1}
+                </h3>
+
+                <img
                     src="${imageUrl}"
                     style="display:block; max-width:500px; width:100%; height:auto; margin:15px auto; border-radius:12px;"
-                 >
-                 <a
+                >
+
+                <a
                     href="${imageUrl}"
                     download="scene-${i + 1}.png"
                     style="display:inline-block; padding:10px 20px; background:#333; color:white; text-decoration:none; border-radius:8px;"
-                 >
+                >
                     ⬇️ DOWNLOAD SCENE
-                 </a>`;
+                </a>
+            `;
+
 
         } catch (error) {
 
             console.error(error);
 
-            imageBox.innerHTML =
-                `<h3>🎬 Scene ${i + 1}</h3>
-                 <p>❌ Image generation failed.</p>`;
+            imageBox.innerHTML = `
+                <h3>
+                    🎬 Scene ${i + 1}
+                </h3>
+
+                <p>
+                    ❌ Image generation failed.
+                </p>
+            `;
         }
     }
 }
-    
-    function escapeHtml(text) {
-
-        const div =
-            document.createElement("div");
-
-        div.textContent =
-            text || "";
-
-        return div.innerHTML;
-    }
 
 
-    function addGalleryImage(blob, key) {
 
-        const imageUrl =
-            URL.createObjectURL(blob);
+/* CONVERT GENERATED IMAGE FOR VIDEO API */
 
-        const galleryImage =
-            document.createElement("img");
+function blobToBase64(blob) {
 
-        galleryImage.src =
-            imageUrl;
+    return new Promise(
+        (resolve, reject) => {
 
-        galleryImage.style.width =
-            "200px";
-
-        galleryImage.style.cursor =
-            "pointer";
-
-        galleryImage.style.borderRadius =
-            "10px";
+            const reader =
+                new FileReader();
 
 
-        galleryImage.onclick =
-            function() {
+            reader.onloadend =
+                function() {
 
-                window.open(
-                    imageUrl,
-                    "_blank"
+                    resolve(
+                        reader.result
+                    );
+                };
+
+
+            reader.onerror =
+                reject;
+
+
+            reader.readAsDataURL(
+                blob
+            );
+        }
+    );
+}
+
+
+
+/* SAFE HTML DISPLAY */
+
+function escapeHtml(text) {
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+    div.textContent =
+        text || "";
+
+    return div.innerHTML;
+}
+
+
+
+/* IMAGE HISTORY */
+
+function addGalleryImage(
+    blob,
+    key
+) {
+
+    const imageUrl =
+        URL.createObjectURL(
+            blob
+        );
+
+
+    const galleryImage =
+        document.createElement(
+            "img"
+        );
+
+
+    galleryImage.src =
+        imageUrl;
+
+    galleryImage.style.width =
+        "200px";
+
+    galleryImage.style.cursor =
+        "pointer";
+
+    galleryImage.style.borderRadius =
+        "10px";
+
+
+    galleryImage.onclick =
+        function() {
+
+            window.open(
+                imageUrl,
+                "_blank"
+            );
+        };
+
+
+    const deleteButton =
+        document.createElement(
+            "button"
+        );
+
+
+    deleteButton.textContent =
+        "🗑️ DELETE";
+
+    deleteButton.style.display =
+        "block";
+
+    deleteButton.style.margin =
+        "8px auto 20px";
+
+    deleteButton.style.padding =
+        "8px 16px";
+
+    deleteButton.style.background =
+        "#8b0000";
+
+    deleteButton.style.color =
+        "white";
+
+    deleteButton.style.border =
+        "none";
+
+    deleteButton.style.borderRadius =
+        "6px";
+
+    deleteButton.style.cursor =
+        "pointer";
+
+
+    deleteButton.onclick =
+        function() {
+
+            const transaction =
+                imageDB.transaction(
+                    "images",
+                    "readwrite"
                 );
-            };
+
+            const store =
+                transaction.objectStore(
+                    "images"
+                );
+
+            const request =
+                store.delete(
+                    key
+                );
 
 
-        const deleteButton =
-            document.createElement("button");
+            request.onsuccess =
+                function() {
 
-        deleteButton.textContent =
-            "🗑️ DELETE";
+                    galleryImage.remove();
 
-        deleteButton.style.display =
-            "block";
+                    deleteButton.remove();
 
-        deleteButton.style.margin =
-            "8px auto 20px";
-
-        deleteButton.style.padding =
-            "8px 16px";
-
-        deleteButton.style.background =
-            "#8b0000";
-
-        deleteButton.style.color =
-            "white";
-
-        deleteButton.style.border =
-            "none";
-
-        deleteButton.style.borderRadius =
-            "6px";
-
-        deleteButton.style.cursor =
-            "pointer";
-
-
-        deleteButton.onclick =
-            function() {
-
-                const transaction =
-                    imageDB.transaction(
-                        "images",
-                        "readwrite"
+                    URL.revokeObjectURL(
+                        imageUrl
                     );
-
-                const store =
-                    transaction.objectStore(
-                        "images"
-                    );
-
-                const request =
-                    store.delete(key);
+                };
+        };
 
 
-                request.onsuccess =
-                    function() {
-
-                        galleryImage.remove();
-
-                        deleteButton.remove();
-
-                        URL.revokeObjectURL(
-                            imageUrl
-                        );
-                    };
-            };
+    document
+        .getElementById(
+            "gallery"
+        )
+        .appendChild(
+            galleryImage
+        );
 
 
-        document
-            .getElementById("gallery")
-            .appendChild(
-                galleryImage
-            );
+    document
+        .getElementById(
+            "gallery"
+        )
+        .appendChild(
+            deleteButton
+        );
+}
 
-        document
-            .getElementById("gallery")
-            .appendChild(
-                deleteButton
-            );
+
+
+/* LOAD IMAGE HISTORY */
+
+function loadGallery() {
+
+    if (!imageDB) {
+        return;
     }
 
 
-    function loadGallery() {
-
-        if (!imageDB) {
-            return;
-        }
-
-        const transaction =
-            imageDB.transaction(
-                "images",
-                "readonly"
-            );
-
-        const store =
-            transaction.objectStore(
-                "images"
-            );
-
-        const request =
-            store.openCursor();
+    const transaction =
+        imageDB.transaction(
+            "images",
+            "readonly"
+        );
 
 
-        request.onsuccess =
-            function(event) {
+    const store =
+        transaction.objectStore(
+            "images"
+        );
 
-                const cursor =
-                    event.target.result;
 
-                if (cursor) {
+    const request =
+        store.openCursor();
 
-                    addGalleryImage(
-                        cursor.value,
-                        cursor.key
-                    );
 
-                    cursor.continue();
-                }
-            };
+    request.onsuccess =
+        function(event) {
+
+            const cursor =
+                event.target.result;
+
+
+            if (cursor) {
+
+                addGalleryImage(
+                    cursor.value,
+                    cursor.key
+                );
+
+                cursor.continue();
+            }
+        };
+}
+
+
+
+/* CLEAR CURRENT IMAGE */
+
+function clearImage() {
+
+    document
+        .getElementById(
+            "prompt"
+        )
+        .value = "";
+
+
+    document
+        .getElementById(
+            "result"
+        )
+        .innerHTML = "";
+}
+
+
+
+/* DELETE IMAGE HISTORY */
+
+function deleteAllHistory() {
+
+    if (!imageDB) {
+        return;
     }
 
 
-    function clearImage() {
-
-        document
-            .getElementById("prompt")
-            .value = "";
-
-        document
-            .getElementById("result")
-            .innerHTML = "";
-    }
+    const transaction =
+        imageDB.transaction(
+            "images",
+            "readwrite"
+        );
 
 
-    function deleteAllHistory() {
+    const store =
+        transaction.objectStore(
+            "images"
+        );
 
-        if (!imageDB) {
-            return;
-        }
 
-        const transaction =
-            imageDB.transaction(
-                "images",
-                "readwrite"
-            );
+    store.clear();
 
-        const store =
-            transaction.objectStore(
-                "images"
-            );
 
-        store.clear();
-    }
+    document
+        .getElementById(
+            "gallery"
+        )
+        .innerHTML = "";
+}
 
 </script>
 
