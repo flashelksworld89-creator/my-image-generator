@@ -609,6 +609,16 @@ async function generateSceneImages() {
                 >
                     ⬇️ DOWNLOAD SCENE
                 </a>
+         <br><br>
+
+<button
+    type="button"
+    onclick="generateSceneVideo(this)"
+    style="padding:12px 24px; font-size:16px; font-weight:bold; color:white; background:#e84393; border:none; border-radius:8px;">
+    🎥 GENERATE VIDEO
+</button>
+
+<div class="videoResult" style="margin-top:15px;"></div> 
             `;
 
 
@@ -632,7 +642,107 @@ async function generateSceneImages() {
 
 
 /* CONVERT GENERATED IMAGE FOR VIDEO API */
+async function generateSceneVideo(button) {
 
+    const imageBox =
+        button.parentElement;
+
+    const videoResult =
+        imageBox.querySelector(
+            ".videoResult"
+        );
+
+    const imageUrl =
+        imageBox.dataset.image;
+
+    const prompt =
+        imageBox.dataset.prompt;
+
+
+    if (!imageUrl) {
+
+        videoResult.innerHTML =
+            "Missing scene image.";
+
+        return;
+    }
+
+
+    videoResult.innerHTML =
+        "🎥 Generating video...";
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/generatevideo",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        imageUrl: imageUrl,
+                        prompt: prompt
+                    })
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error ||
+                "Video generation failed."
+            );
+        }
+
+
+        if (!data.videoUrl) {
+
+            throw new Error(
+                "No video URL returned."
+            );
+        }
+
+
+        videoResult.innerHTML = `
+            <video
+                controls
+                style="display:block; max-width:500px; width:100%; margin:20px auto; border-radius:12px;"
+            >
+                <source
+                    src="${data.videoUrl}"
+                    type="video/mp4"
+                >
+            </video>
+
+            <a
+                href="${data.videoUrl}"
+                target="_blank"
+                style="display:inline-block; padding:10px 20px; background:#333; color:white; text-decoration:none; border-radius:8px;"
+            >
+                ⬇️ OPEN / DOWNLOAD VIDEO
+            </a>
+        `;
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        videoResult.innerHTML =
+            "❌ Video generation failed.";
+    }
+}
 function blobToBase64(blob) {
 
     return new Promise(
