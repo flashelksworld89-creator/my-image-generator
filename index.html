@@ -115,7 +115,14 @@
         </button>
 
         <div id="storyResult" style="margin-top:30px;"></div>
+<button
+    type="button"
+    onclick="generateSceneImages()"
+    style="margin-top:20px; padding:14px 30px; font-size:18px; font-weight:bold; color:white; background:#6c5ce7; border:none; border-radius:10px;">
+    🎨 GENERATE SCENE IMAGES
+</button>
 
+<div id="sceneImages" style="margin-top:30px;"></div>
     </div>
 
 
@@ -396,7 +403,110 @@
         }
     }
 
+async function generateSceneImages() {
 
+    const sceneImages =
+        document.getElementById("sceneImages");
+
+    const sceneElements =
+        document.querySelectorAll(".scene");
+
+    if (!sceneElements.length) {
+        sceneImages.innerHTML =
+            "Please plan a story first.";
+        return;
+    }
+
+    sceneImages.innerHTML =
+        "<h2>🎨 Generating Scene Images...</h2>";
+
+    for (let i = 0; i < sceneElements.length; i++) {
+
+        const scene =
+            sceneElements[i];
+
+        const promptElement =
+            scene.querySelector("p:nth-of-type(2)");
+
+        const prompt =
+            promptElement
+                ? promptElement.innerText
+                    .replace("Visual Prompt:", "")
+                    .trim()
+                : "";
+
+        if (!prompt) {
+            continue;
+        }
+
+        const imageBox =
+            document.createElement("div");
+
+        imageBox.style.margin =
+            "30px auto";
+
+        imageBox.innerHTML =
+            `<h3>🎬 Scene ${i + 1}</h3>
+             <p>Generating image...</p>`;
+
+        sceneImages.appendChild(imageBox);
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/generate",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            prompt: prompt
+                        })
+                    }
+                );
+
+            if (!response.ok) {
+                throw new Error(
+                    "Image generation failed."
+                );
+            }
+
+            const blob =
+                await response.blob();
+
+            const imageUrl =
+                URL.createObjectURL(blob);
+
+            imageBox.innerHTML =
+                `<h3>🎬 Scene ${i + 1}</h3>
+                 <img
+                    src="${imageUrl}"
+                    style="display:block; max-width:500px; width:100%; height:auto; margin:15px auto; border-radius:12px;"
+                 >
+                 <a
+                    href="${imageUrl}"
+                    download="scene-${i + 1}.png"
+                    style="display:inline-block; padding:10px 20px; background:#333; color:white; text-decoration:none; border-radius:8px;"
+                 >
+                    ⬇️ DOWNLOAD SCENE
+                 </a>`;
+
+        } catch (error) {
+
+            console.error(error);
+
+            imageBox.innerHTML =
+                `<h3>🎬 Scene ${i + 1}</h3>
+                 <p>❌ Image generation failed.</p>`;
+        }
+    }
+}
+    
     function escapeHtml(text) {
 
         const div =
