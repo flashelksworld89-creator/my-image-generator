@@ -20,19 +20,16 @@ export default async function handler(req, res) {
 
         const response = await client.chatCompletion({
             model: "Qwen/Qwen3-32B",
+            provider: "auto",
             messages: [
                 {
                     role: "system",
                     content: `
 You are a professional visual story planner.
 
-Your job is to take a paragraph and turn it into a sequence
-of visual scenes that can later become images, a collage,
-a storyboard, and eventually a video.
+Turn the user's paragraph into a sequence of visual scenes.
 
-Return ONLY valid JSON.
-
-Use this exact structure:
+Return ONLY valid JSON in this exact structure:
 
 {
   "title": "short title",
@@ -40,7 +37,7 @@ Use this exact structure:
   "scenes": [
     {
       "scene": 1,
-      "description": "what happens in this scene",
+      "description": "what happens",
       "visual_prompt": "detailed image-generation prompt",
       "duration": 5
     }
@@ -49,22 +46,22 @@ Use this exact structure:
 
 Rules:
 
-- Create between 3 and 12 scenes.
+- Create 3 to 12 scenes.
 - Follow the story in chronological order.
-- Each scene should represent a visually meaningful moment.
-- Keep characters visually consistent between scenes.
-- Keep clothing, appearance, setting, and important objects consistent.
-- Make visual prompts detailed enough for an image generator.
+- Each scene must represent a meaningful visual moment.
+- Keep characters visually consistent.
+- Keep clothing, locations, objects, and visual style consistent.
+- Make each visual_prompt detailed enough for an image generator.
 - Include camera angle, lighting, environment, mood, and important visual details.
 - Do not invent major events that are not supported by the paragraph.
 - If the paragraph is abstract, translate its ideas into meaningful visual imagery.
-- Use 5 seconds as the default scene duration.
-- Return JSON only. No explanation outside the JSON.
-                    `
+- Use 5 seconds as the default duration.
+- Return JSON only.
+`
                 },
                 {
                     role: "user",
-                    content: paragraph
+                    content: paragraph.trim()
                 }
             ],
             max_tokens: 4000,
