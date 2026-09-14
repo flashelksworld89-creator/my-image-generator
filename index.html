@@ -644,103 +644,78 @@ async function generateSceneImages() {
 /* CONVERT GENERATED IMAGE FOR VIDEO API */
 async function generateSceneVideo(button) {
 
-    const imageBox =
-        button.parentElement;
+    const imageBox = button.parentElement;
+    const videoResult = imageBox.querySelector(".videoResult");
 
-    const videoResult =
-        imageBox.querySelector(
-            ".videoResult"
-        );
-
-    const imageUrl =
-        imageBox.dataset.image;
-
-    const prompt =
-        imageBox.dataset.prompt;
-
+    const imageUrl = imageBox.dataset.image;
+    const prompt = imageBox.dataset.prompt;
 
     if (!imageUrl) {
-
-        videoResult.innerHTML =
-            "Missing scene image.";
-
+        videoResult.innerHTML = "Missing scene image.";
         return;
     }
 
-
-    videoResult.innerHTML =
-        "🎥 Generating video...";
-
+    videoResult.innerHTML = "🎥 Generating video...";
 
     try {
 
-        const response =
-            await fetch(
-                "/api/generatevideo",
-                {
-                    method: "POST",
+        const response = await fetch("/api/generatevideo", {
+            method: "POST",
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+            headers: {
+                "Content-Type": "application/json"
+            },
 
-                    body: JSON.stringify({
-                        imageUrl: imageUrl,
-                        prompt: prompt
-                    })
-                }
-            );
-
-
-        const data =
-            await response.json();
-
+            body: JSON.stringify({
+                imageUrl: imageUrl,
+                prompt: prompt
+            })
+        });
 
         if (!response.ok) {
 
-            throw new Error(
-                data.error ||
-                "Video generation failed."
-            );
+            let message = "Video generation failed.";
+
+            try {
+                const errorData = await response.json();
+                message = errorData.error || message;
+            } catch {}
+
+            throw new Error(message);
         }
 
+        const videoBlob = await response.blob();
 
-        if (!data.videoUrl) {
-
-            throw new Error(
-                "No video URL returned."
-            );
-        }
-
+        const videoUrl =
+            URL.createObjectURL(videoBlob);
 
         videoResult.innerHTML = `
             <video
                 controls
+                autoplay
                 style="display:block; max-width:500px; width:100%; margin:20px auto; border-radius:12px;"
             >
                 <source
-                    src="${data.videoUrl}"
+                    src="${videoUrl}"
                     type="video/mp4"
                 >
             </video>
 
             <a
-                href="${data.videoUrl}"
-                target="_blank"
+                href="${videoUrl}"
+                download="generated-video.mp4"
                 style="display:inline-block; padding:10px 20px; background:#333; color:white; text-decoration:none; border-radius:8px;"
             >
-                ⬇️ OPEN / DOWNLOAD VIDEO
+                ⬇️ DOWNLOAD VIDEO
             </a>
         `;
-
 
     } catch (error) {
 
         console.error(error);
 
         videoResult.innerHTML =
-            "❌ Video generation failed.";
+            "❌ " + error.message;
     }
 }
 function blobToBase64(blob) {
