@@ -1,8 +1,6 @@
-import { fal } from "@fal-ai/client";
+import { InferenceClient } from "@huggingface/inference";
 
-fal.config({
-    credentials: process.env.FAL_KEY
-});
+const hf = new InferenceClient(process.env.HF_TOKEN);
 
 export default async function handler(req, res) {
 
@@ -22,23 +20,29 @@ export default async function handler(req, res) {
             });
         }
 
-        const result = await fal.subscribe(
-            "fal-ai/kling-video/v1.6/pro/image-to-video",
-            {
-                input: {
-                    prompt: prompt || "Natural cinematic movement.",
-                    image_url: imageUrl,
-                    duration: "5",
-                    aspect_ratio: "16:9",
-                    negative_prompt: "blur, distort, and low quality",
-                    cfg_scale: 0.5
-                }
-            }
-        );
+        const imageResponse = await fetch(imageUrl);
 
-        return res.status(200).json({
-            videoUrl: result.data?.video?.url || result.video?.url
+        if (!imageResponse.ok) {
+            throw new Error("Could not download image.");
+        }
+
+        const imageBuffer = await imageResponse.arrayBuffer();
+        const base64Image = Buffer.from(imageBuffer).toString("base64");
+
+        const video = await hf.imageTextToVideo({
+            model: "Lightricks/LTX-Video",
+            inputs: base64Image,
+            parameters: {
+                prompt: prompt || "Natural cinematic movement."
+            }
         });
+
+        const videoBuffer = Buffer.from(await video.arrayBuffer());
+
+        res.setHeader("Content-Type", "video/mp4");
+        res.setHeader("Content-Length", videoBuffer.length);
+
+        return res.status(200).send(videoBuffer);
 
     } catch (error) {
 
